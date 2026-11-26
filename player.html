@@ -7,13 +7,14 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
+    html, body {
+      height: 100%;
       background: #0d0d1a;
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     header {
@@ -62,28 +63,23 @@
     /* Game stage */
     #stage {
       flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       position: relative;
       background: #050510;
-      min-height: 0;
       overflow: hidden;
+      min-height: 0;
     }
 
     #game-container {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    ruffle-player, #game-container embed, #game-container object {
+    #game-container > * {
       width: 100%;
       height: 100%;
-      max-width: 100%;
-      max-height: 100%;
+      display: block;
     }
 
     /* Loading overlay */
@@ -169,16 +165,28 @@
 
 <div id="hint">💡 Tip: On mobile, use fullscreen for best experience. Saves are stored in your browser.</div>
 
-<script src="https://unpkg.com/@ruffle-rs/ruffle@0.1.0-nightly.2025.11.19/dist/ruffle.js"></script>
+<script>
+  window.RufflePlayer = window.RufflePlayer || {};
+</script>
+<script src="ruffle/ruffle.js"></script>
 <script>
 (function() {
   'use strict';
 
   const GAME_FILES = {
-    'collection': { path: 'https://archive.org/download/epic-battle-fantasy-collection/EBF%20Collection.swf', title: 'EBF Collection' },
-    'ebf3':       { path: 'https://archive.org/download/epic-battle-fantasy-collection/Epic%20Battle%20Fantasy%203.swf', title: 'Epic Battle Fantasy 3' },
-    'ebf4':       { path: 'https://archive.org/download/epic-battle-fantasy-collection/Epic%20Battle%20Fantasy%204.swf', title: 'Epic Battle Fantasy 4' },
-    'ebf5':       { path: 'https://archive.org/download/epic-battle-fantasy-collection/Epic%20Battle%20Fantasy%205.swf', title: 'Epic Battle Fantasy 5' }
+    'ebf1':       { path: 'game/Epic Battle Fantasy.swf',    title: 'Epic Battle Fantasy' },
+    'ebf2':       { path: 'game/Epic Battle Fantasy 2.swf',  title: 'Epic Battle Fantasy 2' },
+    'ebf3':       { path: 'game/Epic Battle Fantasy 3.swf',  title: 'Epic Battle Fantasy 3' },
+    'ebf4':       { path: 'game/Epic Battle Fantasy 4.swf',  title: 'Epic Battle Fantasy 4' },
+    'ebf5':       { path: 'game/Epic Battle Fantasy 5.swf',  title: 'Epic Battle Fantasy 5' },
+    'adventure':  { path: 'game/Adventure Story.swf',        title: 'Adventure Story' },
+    'brawl':      { path: 'game/Brawl Royale.swf',           title: 'Brawl Royale' },
+    'bullet':     { path: 'game/Bullet Heaven.swf',          title: 'Bullet Heaven' },
+    'catcafe':    { path: 'game/Cat Cafe.swf',               title: 'Cat Cafe' },
+    'mecha':      { path: 'game/Mecha Dress Up Game.swf',    title: 'Mecha Dress Up Game' },
+    'monster':    { path: 'game/Monster Book.swf',           title: 'Monster Book' },
+    'sketchbook': { path: 'game/Sketchbook.swf',             title: 'Sketchbook' },
+    'kitten':     { path: 'game/The Kitten Game.swf',        title: 'The Kitten Game' },
   };
 
   const params = new URLSearchParams(window.location.search);
@@ -194,18 +202,7 @@
   document.getElementById('game-title').textContent = game.title;
   document.getElementById('load-status').textContent = 'Loading ' + game.title + '...';
 
-  // Wait for Ruffle to be available, then create the player
-  function initRuffle(attempts) {
-    if (window.RufflePlayer) {
-      createPlayer();
-    } else if (attempts > 0) {
-      setTimeout(() => initRuffle(attempts - 1), 200);
-    } else {
-      showError('Ruffle emulator failed to load. Check your internet connection and reload.');
-    }
-  }
-
-  function createPlayer() {
+  window.addEventListener('DOMContentLoaded', () => {
     try {
       const ruffle = window.RufflePlayer.newest();
       const player = ruffle.createPlayer();
@@ -215,35 +212,27 @@
       const container = document.getElementById('game-container');
       container.appendChild(player);
 
-      const playerConfig = {
-        letterbox: 'on',
+      player.ruffle().load({
+        url: game.path,
         autoplay: 'on',
-        unmuteOverlay: 'visible',
-        contextMenu: 'off',
+        letterbox: 'on',
         scale: 'showAll',
-        fixedSize: false,
-        splashScreen: false,
+        contextMenu: 'off',
+        unmuteOverlay: 'visible',
         warnOnUnsupportedContent: false,
-        logLevel: 'error',
-        preferredRenderer: 'webgpu'
-      };
+      }).then(() => {
+        hideLoading();
+      }).catch(err => {
+        showError('Game failed to load: ' + (err && err.message ? err.message : err));
+      });
 
-      const loadPromise = player.load({ url: game.path, ...playerConfig });
-      if (loadPromise && loadPromise.then) {
-        loadPromise.then(() => {
-          hideLoading();
-        }).catch(err => {
-          showError('Game file failed to load: ' + (err && err.message ? err.message : 'network or file error'));
-        });
-      }
-
-      // Fallback: hide loading after 15s regardless
-      setTimeout(hideLoading, 15000);
+      // Fallback ẩn loading sau 30s (game nặng load lâu)
+      setTimeout(hideLoading, 30000);
 
     } catch (err) {
       showError('Failed to start player: ' + err.message);
     }
-  }
+  });
 
   function hideLoading() {
     const l = document.getElementById('loading');
@@ -275,7 +264,6 @@
     location.reload();
   });
 
-  initRuffle(50);
 })();
 </script>
 

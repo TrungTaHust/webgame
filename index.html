@@ -14,7 +14,6 @@
       min-height: 100vh;
     }
 
-    /* Starfield background */
     body::before {
       content: '';
       position: fixed;
@@ -41,7 +40,6 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      text-shadow: none;
       filter: drop-shadow(0 0 20px rgba(255,160,0,0.4));
     }
 
@@ -63,17 +61,47 @@
       letter-spacing: 1px;
     }
 
-    .grid {
+    /* Section headers */
+    .section {
       position: relative;
       z-index: 1;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 24px;
       max-width: 1100px;
-      margin: 40px auto;
-      padding: 0 20px 60px;
+      margin: 0 auto;
+      padding: 0 20px;
     }
 
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #555;
+      padding: 32px 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      margin-bottom: 24px;
+    }
+
+    .section-title span {
+      color: #ffd700;
+      margin-right: 8px;
+    }
+
+    /* Grids */
+    .grid-main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 8px;
+    }
+
+    .grid-small {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    /* Cards */
     .card {
       background: linear-gradient(145deg, #1a1a2e, #16213e);
       border: 1px solid rgba(255,255,255,0.08);
@@ -92,6 +120,7 @@
       border-color: var(--accent);
     }
 
+    /* Main card thumb */
     .card-thumb {
       width: 100%;
       aspect-ratio: 16/9;
@@ -122,33 +151,59 @@
       line-height: 1;
     }
 
+    /* Small card thumb */
+    .card-thumb-sm {
+      width: 100%;
+      aspect-ratio: 4/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-thumb-sm::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.5) 100%);
+    }
+
     .card-body {
-      padding: 18px 20px 22px;
+      padding: 14px 16px 18px;
     }
 
     .card-title {
-      font-size: 1.1rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-title-sm {
+      font-size: 0.85rem;
       font-weight: 700;
       color: #fff;
     }
 
     .card-sub {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
+      font-size: 0.75rem;
+      color: #777;
+      margin-top: 3px;
     }
 
     .card-tags {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
-      margin-top: 12px;
+      margin-top: 10px;
     }
 
     .tag {
-      padding: 2px 10px;
+      padding: 2px 8px;
       border-radius: 20px;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       background: rgba(255,255,255,0.07);
       color: #bbb;
       border: 1px solid rgba(255,255,255,0.1);
@@ -158,12 +213,12 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-top: 16px;
-      padding: 10px 18px;
+      margin-top: 14px;
+      padding: 9px 16px;
       background: var(--accent);
       color: #000;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       border-radius: 8px;
       width: fit-content;
       transition: opacity 0.2s;
@@ -171,20 +226,55 @@
 
     .card:hover .play-btn { opacity: 0.85; }
 
-    /* Per-game colors */
-    .g-collection { --accent: #e040fb; --glow: rgba(224,64,251,0.25); --bg: linear-gradient(135deg,#2d0040,#4a007a); }
-    .g-ebf3       { --accent: #40c4ff; --glow: rgba(64,196,255,0.25); --bg: linear-gradient(135deg,#001a40,#003d7a); }
-    .g-ebf4       { --accent: #69f0ae; --glow: rgba(105,240,174,0.25); --bg: linear-gradient(135deg,#003320,#005c3a); }
-    .g-ebf5       { --accent: #ffd740; --glow: rgba(255,215,64,0.25); --bg: linear-gradient(135deg,#2a1a00,#5a3800); }
+    /* unavailable */
+    .card.unavailable {
+      opacity: 0.45;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .card.unavailable .play-btn {
+      background: #444;
+      color: #888;
+    }
+
+    .unavail-label {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 0.7rem;
+      color: #ff6b6b;
+      background: rgba(255,107,107,0.1);
+      border: 1px solid rgba(255,107,107,0.2);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* Colors — main games */
+    .g-ebf1 { --accent: #ff8a65; --glow: rgba(255,138,101,0.25); --bg: linear-gradient(135deg,#2a1000,#5a2800); }
+    .g-ebf2 { --accent: #ce93d8; --glow: rgba(206,147,216,0.25); --bg: linear-gradient(135deg,#1a0030,#3a006a); }
+    .g-ebf3 { --accent: #40c4ff; --glow: rgba(64,196,255,0.25); --bg: linear-gradient(135deg,#001a40,#003d7a); }
+    .g-ebf4 { --accent: #69f0ae; --glow: rgba(105,240,174,0.25); --bg: linear-gradient(135deg,#003320,#005c3a); }
+    .g-ebf5 { --accent: #ffd740; --glow: rgba(255,215,64,0.25); --bg: linear-gradient(135deg,#2a1a00,#5a3800); }
+
+    /* Colors — collection games */
+    .g-adv    { --accent: #81d4fa; --glow: rgba(129,212,250,0.2); --bg: linear-gradient(135deg,#001828,#003050); }
+    .g-brawl  { --accent: #ef9a9a; --glow: rgba(239,154,154,0.2); --bg: linear-gradient(135deg,#2a0000,#4a1010); }
+    .g-bullet { --accent: #a5d6a7; --glow: rgba(165,214,167,0.2); --bg: linear-gradient(135deg,#001a00,#003800); }
+    .g-cat    { --accent: #ffcc80; --glow: rgba(255,204,128,0.2); --bg: linear-gradient(135deg,#2a1800,#4a3000); }
+    .g-mecha  { --accent: #90caf9; --glow: rgba(144,202,249,0.2); --bg: linear-gradient(135deg,#001030,#002060); }
+    .g-monster{ --accent: #ce93d8; --glow: rgba(206,147,216,0.2); --bg: linear-gradient(135deg,#200030,#400058); }
+    .g-sketch { --accent: #e0e0e0; --glow: rgba(224,224,224,0.2); --bg: linear-gradient(135deg,#141414,#2a2a2a); }
+    .g-kitten { --accent: #f48fb1; --glow: rgba(244,143,177,0.2); --bg: linear-gradient(135deg,#2a001a,#4a0030); }
 
     footer {
       position: relative;
       z-index: 1;
       text-align: center;
-      padding: 20px;
-      color: #444;
+      padding: 24px 20px 32px;
+      color: #333;
       font-size: 0.75rem;
       border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 40px;
     }
   </style>
 </head>
@@ -196,71 +286,145 @@
   <span class="badge">✦ Powered by Ruffle Emulator ✦</span>
 </header>
 
-<div class="grid">
+<!-- ═══ MAIN SERIES ═══ -->
+<div class="section">
+  <div class="section-title"><span>◆</span> Main Series</div>
+  <div class="grid-main">
 
-  <!-- EBF Collection -->
-  <a class="card g-collection" href="player.html?game=collection&title=EBF+Collection">
-    <div class="card-thumb">🎮<span class="card-num">∞</span></div>
-    <div class="card-body">
-      <div class="card-title">EBF Collection</div>
-      <div class="card-sub">by Matt Roszak</div>
-      <div class="card-tags">
-        <span class="tag">RPG</span>
-        <span class="tag">Collection</span>
-        <span class="tag">Classic</span>
+    <a class="card g-ebf1" href="player.html?game=ebf1&title=Epic+Battle+Fantasy">
+      <div class="card-thumb">⚔️<span class="card-num">1</span></div>
+      <div class="card-body">
+        <div class="card-title">Epic Battle Fantasy</div>
+        <div class="card-sub">by Matt Roszak</div>
+        <div class="card-tags"><span class="tag">RPG</span><span class="tag">Classic</span><span class="tag">AS2</span></div>
+        <div class="play-btn">▶ Play Now</div>
       </div>
-      <div class="play-btn">▶ Play Now</div>
-    </div>
-  </a>
+    </a>
 
-  <!-- EBF3 -->
-  <a class="card g-ebf3" href="player.html?game=ebf3&title=Epic+Battle+Fantasy+3">
-    <div class="card-thumb">🗡️<span class="card-num">3</span></div>
-    <div class="card-body">
-      <div class="card-title">Epic Battle Fantasy 3</div>
-      <div class="card-sub">by Matt Roszak</div>
-      <div class="card-tags">
-        <span class="tag">RPG</span>
-        <span class="tag">Turn-based</span>
-        <span class="tag">Free</span>
+    <a class="card g-ebf2" href="player.html?game=ebf2&title=Epic+Battle+Fantasy+2">
+      <div class="card-thumb">🌙<span class="card-num">2</span></div>
+      <div class="card-body">
+        <div class="card-title">Epic Battle Fantasy 2</div>
+        <div class="card-sub">by Matt Roszak</div>
+        <div class="card-tags"><span class="tag">RPG</span><span class="tag">Turn-based</span></div>
+        <div class="play-btn">▶ Play Now</div>
       </div>
-      <div class="play-btn">▶ Play Now</div>
-    </div>
-  </a>
+    </a>
 
-  <!-- EBF4 -->
-  <a class="card g-ebf4" href="player.html?game=ebf4&title=Epic+Battle+Fantasy+4">
-    <div class="card-thumb">🌿<span class="card-num">4</span></div>
-    <div class="card-body">
-      <div class="card-title">Epic Battle Fantasy 4</div>
-      <div class="card-sub">by Matt Roszak</div>
-      <div class="card-tags">
-        <span class="tag">RPG</span>
-        <span class="tag">Adventure</span>
-        <span class="tag">4-char</span>
+    <a class="card g-ebf3" href="player.html?game=ebf3&title=Epic+Battle+Fantasy+3">
+      <div class="card-thumb">🗡️<span class="card-num">3</span></div>
+      <div class="card-body">
+        <div class="card-title">Epic Battle Fantasy 3</div>
+        <div class="card-sub">by Matt Roszak</div>
+        <div class="card-tags"><span class="tag">RPG</span><span class="tag">Turn-based</span><span class="tag">Free</span></div>
+        <div class="play-btn">▶ Play Now</div>
       </div>
-      <div class="play-btn">▶ Play Now</div>
-    </div>
-  </a>
+    </a>
 
-  <!-- EBF5 -->
-  <a class="card g-ebf5" href="player.html?game=ebf5&title=Epic+Battle+Fantasy+5">
-    <div class="card-thumb">🔥<span class="card-num">5</span></div>
-    <div class="card-body">
-      <div class="card-title">Epic Battle Fantasy 5</div>
-      <div class="card-sub">by Matt Roszak</div>
-      <div class="card-tags">
-        <span class="tag">RPG</span>
-        <span class="tag">Premium</span>
-        <span class="tag">5-char</span>
+    <a class="card g-ebf4" href="player.html?game=ebf4&title=Epic+Battle+Fantasy+4">
+      <div class="card-thumb">🌿<span class="card-num">4</span></div>
+      <div class="card-body">
+        <div class="card-title">Epic Battle Fantasy 4</div>
+        <div class="card-sub">by Matt Roszak</div>
+        <div class="card-tags"><span class="tag">RPG</span><span class="tag">Adventure</span><span class="tag">4-char</span></div>
+        <div class="play-btn">▶ Play Now</div>
       </div>
-      <div class="play-btn">▶ Play Now</div>
-    </div>
-  </a>
+    </a>
 
+    <a class="card g-ebf5" href="player.html?game=ebf5&title=Epic+Battle+Fantasy+5">
+      <div class="card-thumb">🔥<span class="card-num">5</span></div>
+      <div class="card-body">
+        <div class="card-title">Epic Battle Fantasy 5</div>
+        <div class="card-sub">by Matt Roszak</div>
+        <div class="card-tags"><span class="tag">RPG</span><span class="tag">Premium</span><span class="tag">5-char</span></div>
+        <div class="play-btn">▶ Play Now</div>
+      </div>
+    </a>
+
+  </div>
 </div>
 
-<footer>Epic Battle Fantasy series © Matt Roszak · Flash emulation via Ruffle (WebAssembly)</footer>
+<!-- ═══ COLLECTION ═══ -->
+<div class="section">
+  <div class="section-title"><span>◆</span> EBF Collection — Other Games</div>
+  <div class="grid-small">
+
+    <a class="card g-adv" href="player.html?game=adventure&title=Adventure+Story">
+      <div class="card-thumb-sm">🏕️</div>
+      <div class="card-body">
+        <div class="card-title-sm">Adventure Story</div>
+        <div class="card-sub">Platformer RPG</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+    <a class="card g-brawl" href="player.html?game=brawl&title=Brawl+Royale">
+      <div class="card-thumb-sm">🥊</div>
+      <div class="card-body">
+        <div class="card-title-sm">Brawl Royale</div>
+        <div class="card-sub">Fighting</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+    <a class="card g-bullet" href="player.html?game=bullet&title=Bullet+Heaven">
+      <div class="card-thumb-sm">✨</div>
+      <div class="card-body">
+        <div class="card-title-sm">Bullet Heaven</div>
+        <div class="card-sub">Bullet hell shooter</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+    <a class="card g-cat" href="player.html?game=catcafe&title=Cat+Cafe">
+      <div class="card-thumb-sm">�</div>
+      <div class="card-body">
+        <div class="card-title-sm">Cat Cafe</div>
+        <div class="card-sub">Idle / Casual</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+    <a class="card g-mecha" href="player.html?game=mecha&title=Mecha+Dress+Up+Game">
+      <div class="card-thumb-sm">🤖</div>
+      <div class="card-body">
+        <div class="card-title-sm">Mecha Dress Up</div>
+        <div class="card-sub">Dress-up / Creator</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+    <a class="card g-monster" href="player.html?game=monster&title=Monster+Book">
+      <div class="card-thumb-sm">📖</div>
+      <div class="card-body">
+        <div class="card-title-sm">Monster Book</div>
+        <div class="card-sub">Encyclopedia</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+    <a class="card g-sketch" href="player.html?game=sketchbook&title=Sketchbook">
+      <div class="card-thumb-sm">✏️</div>
+      <div class="card-body">
+        <div class="card-title-sm">Sketchbook</div>
+        <div class="card-sub">Art / Gallery</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+    <a class="card g-kitten" href="player.html?game=kitten&title=The+Kitten+Game">
+      <div class="card-thumb-sm">🐈</div>
+      <div class="card-body">
+        <div class="card-title-sm">The Kitten Game</div>
+        <div class="card-sub">Idle / Clicker</div>
+        <div class="play-btn">▶ Play</div>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<footer>Epic Battle Fantasy series © Matt Roszak (Kupo Games) · Flash emulation via Ruffle (WebAssembly)</footer>
 
 </body>
 </html>

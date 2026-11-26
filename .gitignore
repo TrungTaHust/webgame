@@ -1,0 +1,7 @@
+ebf4_src/
+ebf5_src/
+ffdec/
+*.zip
+*.map
+ruffle/*.map
+ruffle/*.js.map

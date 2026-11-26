@@ -1,0 +1,193 @@
+================================================================================
+  EPIC BATTLE FANTASY WEB PROJECT — HANDOFF NOTES
+  Dành cho AI tiếp theo đọc và tiếp tục công việc
+================================================================================
+
+--------------------------------------------------------------------------------
+MỤC TIÊU DỰ ÁN
+--------------------------------------------------------------------------------
+Tạo trang web để chơi 4 Flash game của Matt Roszak (Epic Battle Fantasy series)
+trực tiếp trên trình duyệt, kể cả iOS/Android, host miễn phí.
+
+--------------------------------------------------------------------------------
+CẤU TRÚC THƯ MỤC HIỆN TẠI
+--------------------------------------------------------------------------------
+c:\Users\123\Desktop\webgame\
+├── index.html          — Trang chủ, hiển thị 4 card game để chọn
+├── player.html         — Trang chơi game, dùng Ruffle emulator
+├── vercel.json         — Config headers cho Vercel (CORS, MIME type)
+├── test.html           — File test Ruffle (có thể xóa sau khi done)
+├── HANDOFF.txt         — File này
+├── game/               — Thư mục chứa các file .swf
+│   ├── Epic Battle Fantasy.swf      (40 MB)  — EBF1 ✅
+│   ├── Epic Battle Fantasy 2.swf    (53 MB)  — EBF2 ✅
+│   ├── Epic Battle Fantasy 3.swf    (72 MB)  — EBF3 ✅
+│   ├── Epic Battle Fantasy 4.swf   (164 MB)  — EBF4 ❌ AIR build
+│   ├── Epic Battle Fantasy 5.swf   (288 MB)  — EBF5 ❌ AIR build
+│   ├── EBF Collection.swf           (25 MB)  — ❌ AIR build (không dùng)
+│   ├── Adventure Story.swf          (25 MB)  ✅
+│   ├── Brawl Royale.swf             (29 MB)  ✅
+│   ├── Bullet Heaven.swf            (19 MB)  ✅
+│   ├── Cat Cafe.swf                  (6 MB)  ✅
+│   ├── Mecha Dress Up Game.swf      (32 MB)  ✅
+│   ├── Monster Book.swf             (20 MB)  ✅
+│   ├── Sketchbook.swf               (28 MB)  ✅
+│   └── The Kitten Game.swf          (26 MB)  ✅
+└── ruffle/             — Ruffle emulator self-hosted (nightly 2025-11-25)
+    ├── ruffle.js       — Script chính, load vào player.html
+    ├── *.wasm          — WebAssembly binary
+    └── core.ruffle.*.js
+
+--------------------------------------------------------------------------------
+TÌNH TRẠNG HIỆN TẠI
+--------------------------------------------------------------------------------
+
+✅ ĐÃ HOÀN THÀNH:
+- index.html: trang chủ đẹp, responsive, chia 2 section: Main Series + Collection
+- player.html: trang player dùng Ruffle, có nút Back / Restart / Fullscreen
+- Ruffle self-hosted đã download về thư mục ruffle/ (không dùng CDN)
+- EBF1, EBF2, EBF3 chạy được bình thường trên trình duyệt
+- 8 game nhỏ từ EBF Collection đã được copy vào game/ và thêm vào trang chủ:
+    Adventure Story, Brawl Royale, Bullet Heaven, Cat Cafe,
+    Mecha Dress Up Game, Monster Book, Sketchbook, The Kitten Game
+- Cách khởi tạo Ruffle đúng: dùng window.RufflePlayer.newest() + player.ruffle().load()
+- EBF4 và EBF5 hiển thị trên trang nhưng bị disable với label "AIR build — coming soon"
+
+❌ VẤN ĐỀ CÒN LẠI — QUAN TRỌNG:
+- EBF4: đã patch xong, cần test thêm nếu còn lỗi
+- EBF5: đã patch xong, cần test save/load
+- EBF Collection.swf (AIR): chưa xử lý, không hiển thị trên trang chủ
+
+--------------------------------------------------------------------------------
+THÔNG TIN KỸ THUẬT QUAN TRỌNG
+--------------------------------------------------------------------------------
+
+THÔNG TIN PATCH EBF5 (đã thực hiện):
+- File patch: Options.as — đổi 2 dòng:
+    * enableSols: false → true     (dùng SharedObject thay vì .meow files)
+    * applicationFeatures: true → false  (bỏ qua AIR wrapper hoàn toàn)
+- EBF5 dùng LocalConnection để nói chuyện với AIR wrapper → trên web không có
+  wrapper nên game đơ khi save. Patch này cho game dùng SOL save ngay từ đầu.
+- Source export còn lại: webgame/ebf5_src/
+
+THÔNG TIN PATCH EBF4 (đã thực hiện):
+- Tool dùng: JPEXS Free Flash Decompiler v26.5.0 tại webgame/ffdec/ffdec-cli.exe
+- Export source: ffdec-cli.exe -export script <outDir> <swf>
+- Import patch: ffdec-cli.exe -importScript <swf> <swf> <patchDir>
+- File đã patch:
+    * AppFeatures.as — xóa toàn bộ AIR API, stub save/load về no-op
+    * Backgrounds.as — thay nativeWindow.bounds bằng stage.stageWidth/Height
+- Source export còn lại: webgame/ebf4_src/ (có thể dùng để debug tiếp)
+- EBF5 không có AIR API trong source → test trực tiếp không cần patch
+  window.RufflePlayer = window.RufflePlayer || {};  // phải đặt TRƯỚC script tag
+  <script src="ruffle/ruffle.js"></script>
+  
+  window.addEventListener('DOMContentLoaded', () => {
+    const ruffle = window.RufflePlayer.newest();
+    const player = ruffle.createPlayer();
+    container.appendChild(player);
+    player.ruffle().load({ url: 'path/to/game.swf', autoplay: 'on', ... });
+  });
+
+LƯU Ý: KHÔNG dùng customElements.whenDefined('ruffle-player') — không hoạt động
+LƯU Ý: KHÔNG dùng CDN unpkg cho Ruffle — đã thử, không hoạt động ổn định
+
+STEAM LIBRARY:
+  Các file .swf gốc từ Steam nằm tại:
+    D:\SteamLibrary\steamapps\common\Epic Battle Fantasy 3\Epic Battle Fantasy 3.swf
+    D:\SteamLibrary\steamapps\common\Epic Battle Fantasy 4\Epic Battle Fantasy 4.swf
+    D:\SteamLibrary\steamapps\common\Epic Battle Fantasy 5\Epic Battle Fantasy 5.swf
+    D:\SteamLibrary\steamapps\common\Epic Battle Fantasy Collection\EBF Collection.swf
+  Tất cả đều là AIR build, cùng file với những gì đang trong game/
+
+  EBF Collection Steam còn có thư mục Games\ chứa các game nhỏ dạng web SWF thuần:
+    D:\SteamLibrary\steamapps\common\Epic Battle Fantasy Collection\Games\
+      - Epic Battle Fantasy.swf   (39 MB)  — EBF1
+      - Epic Battle Fantasy 2.swf (52 MB)  — EBF2
+      - Adventure Story.swf, Bullet Heaven.swf, v.v.
+
+--------------------------------------------------------------------------------
+VIỆC CẦN LÀM TIẾP THEO
+--------------------------------------------------------------------------------
+
+OPTION A — PATCH SWF BẰNG JPEXS (RECOMMENDED để giữ bản Steam đầy đủ)
+  Mục tiêu: xóa/stub các AIR class khỏi SWF để Ruffle có thể chạy
+
+  Bước 1: Tải JPEXS Free Flash Decompiler
+    https://github.com/jindrapetrik/jpexs-decompiler/releases
+    → tải file ffdec_X.X.X_install.exe, cài vào máy
+
+  Bước 2: Mở file SWF trong JPEXS
+    File → Open → chọn game/Epic Battle Fantasy 4.swf
+
+  Bước 3: Với EBF4, cần fix 2 lỗi chính:
+    Lỗi 1: "Class flash.display::Screen could not be found — at Main()"
+      → Tìm class Main trong Scripts
+      → Tìm dòng import flash.display.Screen; → xóa
+      → Tìm chỗ dùng Screen class → xóa hoặc comment out
+
+    Lỗi 2: "flash.filesystem::File — at AppFeatures$/loadOptions()"
+      → Tìm class AppFeatures trong Scripts
+      → Method loadOptions() — đây là hàm đọc save file từ ổ đĩa
+      → Xóa toàn bộ body của loadOptions() hoặc return sớm
+      → Tương tự với SaveMenu$/loadMeowOptions()
+
+  Bước 4: Với EBF Collection:
+    Lỗi: NativeApplication is not defined — at Main/init()
+    Lỗi: HTMLLoader — at Main/clickPlay()
+      → Tìm class Main, method init() → xóa các dòng dùng NativeApplication
+      → Tìm method clickPlay() → xóa/stub phần dùng HTMLLoader
+
+  Bước 5: Với EBF5 — tương tự, cần tìm và stub các AIR class
+    (chưa chạy để lấy lỗi cụ thể, chạy thử trên Ruffle để xem console error)
+
+  Bước 6: Export lại SWF từ JPEXS → Save as → ghi đè vào game/*.swf
+  
+  Bước 7: Test lại trên Live Server
+
+  LƯU Ý KHI PATCH:
+  - Chức năng save/load dùng flash.filesystem.File sẽ bị mất
+    → Thay thế bằng SharedObject (Flash's built-in save = localStorage tương đương)
+    → Ruffle support SharedObject và lưu vào browser storage
+  - NativeApplication dùng để detect fullscreen, exit app → có thể xóa an toàn
+  - flash.display.Screen dùng để lấy kích thước màn hình → thay bằng stage.stageWidth
+
+OPTION B — DÙNG BẢN WEB KHÁC
+  EBF3, EBF4, EBF5 có bản web SWF trên Newgrounds (bản free, không có AIR)
+  Tuy nhiên user đã mua Steam để có bản đầy đủ nên không muốn dùng bản này.
+
+OPTION C — THÊM CÁC GAME NHỎ TỪ EBF COLLECTION
+  EBF Collection Steam có thư mục Games\ chứa các web SWF thuần:
+    D:\SteamLibrary\steamapps\common\Epic Battle Fantasy Collection\Games\
+  Các game này (EBF1, EBF2, Adventure Story...) có thể chạy ngay trên Ruffle
+  mà không cần patch. Có thể thêm vào trang web như là bonus content.
+
+--------------------------------------------------------------------------------
+DEPLOY LÊN NETLIFY (khi game đã chạy được)
+--------------------------------------------------------------------------------
+  Vercel KHÔNG phù hợp vì giới hạn 100MB/file → EBF4 (164MB) và EBF5 (288MB) 
+  không upload được.
+
+  Dùng NETLIFY:
+  1. Vào https://app.netlify.com/drop
+  2. Kéo thả toàn bộ thư mục webgame/ vào trang đó
+  3. Chờ upload (~vài phút do file nặng)
+  4. Nhận link xxx.netlify.app — DONE
+
+  Netlify free plan: không giới hạn file size, 100GB bandwidth/tháng.
+
+  vercel.json trong project không cần thiết cho Netlify, nhưng để lại cũng không sao.
+  Nếu dùng Netlify, có thể tạo thêm file netlify.toml để set headers:
+    [[headers]]
+      for = "/game/*.swf"
+      [headers.values]
+        Content-Type = "application/x-shockwave-flash"
+
+--------------------------------------------------------------------------------
+TỔNG KẾT
+--------------------------------------------------------------------------------
+  - EBF3: ✅ chạy được, không cần làm gì thêm
+  - EBF Collection, EBF4, EBF5: ❌ cần patch SWF (Option A) để chạy được
+  - Sau khi patch xong → deploy lên Netlify là xong
+
+================================================================================
