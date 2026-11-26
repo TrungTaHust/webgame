@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Playing... | Epic Battle Fantasy</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d0d1a;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .back {
+      color: #ffd700;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.2);
+      transition: background 0.2s;
+    }
+
+    .back:hover { background: rgba(255,215,0,0.2); }
+
+    h1 { font-size: 1rem; font-weight: 600; color: #ccc; }
+
+    .controls { margin-left: auto; display: flex; gap: 8px; }
+
+    .btn {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      color: #ddd;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: rgba(255,255,255,0.15); }
+
+    .btn-fs { background: rgba(64,196,255,0.15); color: #40c4ff; }
+
+    /* Game stage */
+    #stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #050510;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    ruffle-player, #game-container embed, #game-container object {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    /* Loading overlay */
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: #0d0d1a;
+      z-index: 10;
+      transition: opacity 0.5s;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(255,215,0,0.15);
+      border-top-color: #ffd700;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loading p { color: #888; font-size: 0.85rem; }
+
+    /* Error overlay */
+    #error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #1a0505;
+      z-index: 20;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #error h2 { color: #ff6b6b; }
+    #error p { color: #aaa; font-size: 0.9rem; }
+
+    /* Hint for mobile */
+    #hint {
+      text-align: center;
+      padding: 8px;
+      font-size: 0.72rem;
+      color: #555;
+      background: rgba(255,255,255,0.02);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="index.html">← Back</a>
+  <h1 id="game-title">Loading...</h1>
+  <div class="controls">
+    <button class="btn" id="btn-restart" title="Reload game">↻ Restart</button>
+    <button class="btn btn-fs" id="btn-fullscreen" title="Fullscreen">⛶ Fullscreen</button>
+  </div>
+</header>
+
+<div id="stage">
+  <div id="game-container"></div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Initializing Ruffle emulator...</p>
+    <p id="load-status">Loading...</p>
+  </div>
+
+  <div id="error">
+    <h2>⚠ Failed to load game</h2>
+    <p id="error-msg">Unknown error</p>
+  </div>
+</div>
+
+<div id="hint">💡 Tip: On mobile, use fullscreen for best experience. Saves are stored in your browser.</div>
+
+<script src="https://unpkg.com/@ruffle-rs/ruffle@0.1.0-nightly.2025.11.19/dist/ruffle.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  const GAME_FILES = {
+    'collection': { path: 'https://archive.org/download/epic-battle-fantasy-collection/EBF%20Collection.swf', title: 'EBF Collection' },
+    'ebf3':       { path: 'https://archive.org/download/epic-battle-fantasy-collection/Epic%20Battle%20Fantasy%203.swf', title: 'Epic Battle Fantasy 3' },
+    'ebf4':       { path: 'https://archive.org/download/epic-battle-fantasy-collection/Epic%20Battle%20Fantasy%204.swf', title: 'Epic Battle Fantasy 4' },
+    'ebf5':       { path: 'https://archive.org/download/epic-battle-fantasy-collection/Epic%20Battle%20Fantasy%205.swf', title: 'Epic Battle Fantasy 5' }
+  };
+
+  const params = new URLSearchParams(window.location.search);
+  const gameKey = params.get('game') || 'ebf3';
+  const game = GAME_FILES[gameKey];
+
+  if (!game) {
+    showError('Game not found: ' + gameKey);
+    return;
+  }
+
+  document.title = game.title + ' | Epic Battle Fantasy';
+  document.getElementById('game-title').textContent = game.title;
+  document.getElementById('load-status').textContent = 'Loading ' + game.title + '...';
+
+  // Wait for Ruffle to be available, then create the player
+  function initRuffle(attempts) {
+    if (window.RufflePlayer) {
+      createPlayer();
+    } else if (attempts > 0) {
+      setTimeout(() => initRuffle(attempts - 1), 200);
+    } else {
+      showError('Ruffle emulator failed to load. Check your internet connection and reload.');
+    }
+  }
+
+  function createPlayer() {
+    try {
+      const ruffle = window.RufflePlayer.newest();
+      const player = ruffle.createPlayer();
+      player.style.width = '100%';
+      player.style.height = '100%';
+
+      const container = document.getElementById('game-container');
+      container.appendChild(player);
+
+      const playerConfig = {
+        letterbox: 'on',
+        autoplay: 'on',
+        unmuteOverlay: 'visible',
+        contextMenu: 'off',
+        scale: 'showAll',
+        fixedSize: false,
+        splashScreen: false,
+        warnOnUnsupportedContent: false,
+        logLevel: 'error',
+        preferredRenderer: 'webgpu'
+      };
+
+      const loadPromise = player.load({ url: game.path, ...playerConfig });
+      if (loadPromise && loadPromise.then) {
+        loadPromise.then(() => {
+          hideLoading();
+        }).catch(err => {
+          showError('Game file failed to load: ' + (err && err.message ? err.message : 'network or file error'));
+        });
+      }
+
+      // Fallback: hide loading after 15s regardless
+      setTimeout(hideLoading, 15000);
+
+    } catch (err) {
+      showError('Failed to start player: ' + err.message);
+    }
+  }
+
+  function hideLoading() {
+    const l = document.getElementById('loading');
+    if (l) {
+      l.style.opacity = '0';
+      setTimeout(() => l.remove(), 500);
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('loading')?.remove();
+    const e = document.getElementById('error');
+    document.getElementById('error-msg').textContent = msg;
+    e.style.display = 'flex';
+  }
+
+  // Fullscreen button
+  document.getElementById('btn-fullscreen').addEventListener('click', () => {
+    const stage = document.getElementById('stage');
+    if (!document.fullscreenElement) {
+      stage.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  // Restart button
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    location.reload();
+  });
+
+  initRuffle(50);
+})();
+</script>
+
+</body>
+</html>
