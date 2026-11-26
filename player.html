@@ -109,6 +109,29 @@
 
     #loading p { color: #888; font-size: 0.85rem; }
 
+    /* Progress bar */
+    #progress-wrap {
+      width: 240px;
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ffd700, #ff8c00);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
+    #progress-pct {
+      font-size: 0.75rem;
+      color: #ffd700;
+      font-weight: 700;
+    }
+
     /* Error overlay */
     #error {
       position: absolute;
@@ -155,6 +178,8 @@
     <div class="spinner"></div>
     <p>Initializing Ruffle emulator...</p>
     <p id="load-status">Loading...</p>
+    <div id="progress-wrap"><div id="progress-bar"></div></div>
+    <p id="progress-pct"></p>
   </div>
 
   <div id="error">
@@ -202,7 +227,7 @@
   document.getElementById('game-title').textContent = game.title;
   document.getElementById('load-status').textContent = 'Loading ' + game.title + '...';
 
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', async () => {
     try {
       const ruffle = window.RufflePlayer.newest();
       const player = ruffle.createPlayer();
@@ -212,8 +237,52 @@
       const container = document.getElementById('game-container');
       container.appendChild(player);
 
+      // Fetch SWF với progress bar
+      const statusEl = document.getElementById('load-status');
+      const pctEl = document.getElementById('progress-pct');
+      const barEl = document.getElementById('progress-bar');
+      document.getElementById('progress-wrap').style.display = 'block';
+
+      const resp = await fetch(game.path);
+      if (!resp.ok) {
+        throw new Error('HTTP ' + resp.status + ' khi tải ' + game.path);
+      }
+
+      const total = parseInt(resp.headers.get('Content-Length') || '0', 10);
+      let received = 0;
+      let swfData;
+
+      if (resp.body && total > 0) {
+        const reader = resp.body.getReader();
+        const chunks = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.length;
+          const pct = Math.min(99, Math.round(received / total * 100));
+          barEl.style.width = pct + '%';
+          pctEl.textContent = pct + '% — ' + (received / 1048576).toFixed(1) + ' / ' + (total / 1048576).toFixed(1) + ' MB';
+        }
+        // Ghép các chunks thành 1 ArrayBuffer
+        const merged = new Uint8Array(received);
+        let offset = 0;
+        for (const c of chunks) {
+          merged.set(c, offset);
+          offset += c.length;
+        }
+        swfData = merged.buffer;
+        barEl.style.width = '100%';
+        pctEl.textContent = '100% — đang khởi động game...';
+      } else {
+        // Fallback: không có stream/total
+        swfData = await resp.arrayBuffer();
+        barEl.style.width = '100%';
+        pctEl.textContent = 'Đã tải xong, đang khởi động...';
+      }
+
       player.ruffle().load({
-        url: game.path,
+        data: swfData,
         autoplay: 'on',
         letterbox: 'on',
         scale: 'showAll',
